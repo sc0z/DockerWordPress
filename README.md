@@ -34,4 +34,3 @@ Using WordPress + LEMP stack for local development.
 * Only include wp-content/themes and wp-content/plugins directories - not WP core files
 * Use composer
 * Install PECL/Pear modules to php 7.3.4
-
