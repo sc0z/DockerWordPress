@@ -1,54 +1,44 @@
 version: '3.6'
 
 services:
+    nginx:
+        image: nginx:latest
+        container_name: nginx
+        ports:
+            - '8000:80'
+        volumes:
+            - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+            - ./nginx.conf:/etc/nginx/nginx.conf
+            - ./wordpress:/var/www/html
+            - ./logs/nginx:/var/log/nginx
+        restart: always
 
-  nginx:
-    image: nginx:${NGINX_VERSION:-latest}
-    container_name: nginx
-    ports:
-      - "8000:80"
-    volumes:
-      - wp_data:/var/www/html
-      - nginx_log_data:/var/log/nginx
-      - ./wordpress-5.2.0.conf:/etc/nginx/nginx.d/wordpress-5.2.0.conf
-    restart: always
+    db:
+        image: mariadb:latest
+        container_name: db
+        ports:
+            - '3306:3306'
+        volumes:
+            - ./mysql:/var/lib/mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+        restart: always
 
-  db:
-    image: mariadb:${MARIADB_VERSION:-latest}
-    container_name: db
-    ports:
-      - "3306:3306"
-    volumes:
-      - db_data:/var/lib/mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    restart: always
-
-  wordpress:
-    image: wordpress:${WORDPRESS_IMAGE:-latest}
-    container_name: wordpress
-    depends_on:
-      - db
-      - nginx
-    volumes:
-      - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
-      - ./php-fpm.conf:/usr/local/etc/php-fpm/php-fpm.conf
-      - wp_data:/var/www/html
-    ports:
-      - "9000:9000"
-    environment:
-      WORDPRESS_DB_HOST: db:3306
-      WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME}
-      WORDPRESS_DB_USER: ${WORDPRESS_DB_USER}
-      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
-      WORDPRESS_TABLE_PREFIX: ${WORDPRESS_TABLE_PREFIX}
-      WORDPRESS_DEBUG: ${WORDPRESS_DEBUG_MODE}
-    restart: always
-
-volumes:
-  db_data: {}
-  wp_data: {}
-  nginx_log_data: {}
+    wordpress:
+        image: wordpress:5.2.0-php7.3-fpm
+        container_name: wordpress
+        depends_on:
+            - db
+            - nginx
+        ports:
+            - '9000:9000'
+        volumes:
+            - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
+            - ./php-fpm.conf:/usr/local/etc/php-fpm/php-fpm.conf
+            - ./wordpress:/var/www/html
+        environment:
+            WORDPRESS_DB_HOST: db
+            WORDPRESS_DB_USER: ${WORDPRESS_DB_USER}
+            WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
+            WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME}
+        restart: always
